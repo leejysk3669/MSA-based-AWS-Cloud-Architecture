@@ -21,6 +21,7 @@ MSA 기반 AWS Cloud Architecture
 - EKS 기반 서비스(팀 인프라 담당자 구축)
 
 **요청 흐름**
+
 Client → CloudFront → S3 → API Gateway → Backend API → RDS
 
 ---
