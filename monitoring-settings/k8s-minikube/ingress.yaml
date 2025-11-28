@@ -1,0 +1,64 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-ingress
+  namespace: hippo-project
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization"
+spec:
+  ingressClassName: nginx
+  rules:
+  - http:
+      paths:
+      - path: /api/board
+        pathType: Prefix
+        backend:
+          service:
+            name: community-board-service
+            port:
+              number: 3002
+      - path: /api/study-groups
+        pathType: Prefix
+        backend:
+          service:
+            name: study-group-service
+            port:
+              number: 3003
+      - path: /api/notifications
+        pathType: Prefix
+        backend:
+          service:
+            name: notification-service
+            port:
+              number: 3004
+      - path: /api/jobs-news
+        pathType: Prefix
+        backend:
+          service:
+            name: jobs-news-service
+            port:
+              number: 3006
+      - path: /api/search
+        pathType: Prefix
+        backend:
+          service:
+            name: certificate-search-service
+            port:
+              number: 5000
+      - path: /api/autocomplete
+        pathType: Prefix
+        backend:
+          service:
+            name: certificate-search-service
+            port:
+              number: 5000
+      - path: /api/portfolio
+        pathType: Prefix
+        backend:
+          service:
+            name: ai-portfolio-service
+            port:
+              number: 4000

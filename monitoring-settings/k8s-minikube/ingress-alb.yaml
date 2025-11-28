@@ -1,0 +1,106 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: hippo-ingress
+  namespace: hippo-project
+  annotations:
+    kubernetes.io/ingress.class: "alb"
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:ap-northeast-2:ACCOUNT_ID:certificate/CERT_ID"
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/healthcheck-path: "/health"
+    alb.ingress.kubernetes.io/healthcheck-port: "80"
+    alb.ingress.kubernetes.io/success-codes: "200,302"
+    alb.ingress.kubernetes.io/group.name: "hippo"
+    alb.ingress.kubernetes.io/group.order: "1"
+    alb.ingress.kubernetes.io/tags: "Environment=dev,Project=hippo"
+spec:
+  rules:
+  # 프론트엔드 (S3 + CloudFront로 대체 가능)
+  - host: your-domain.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: frontend-service
+            port:
+              number: 80
+  
+  # API 엔드포인트들
+  - host: api.your-domain.com
+    http:
+      paths:
+      # 커뮤니티 게시판 API
+      - path: /api/board
+        pathType: Prefix
+        backend:
+          service:
+            name: community-board-service
+            port:
+              number: 3002
+      
+      # 스터디 그룹 API
+      - path: /api/study-groups
+        pathType: Prefix
+        backend:
+          service:
+            name: study-group-service
+            port:
+              number: 3003
+      
+      # 알림 API
+      - path: /api/notifications
+        pathType: Prefix
+        backend:
+          service:
+            name: notification-service
+            port:
+              number: 3004
+      
+      # 취업뉴스 API
+      - path: /api/jobs-news
+        pathType: Prefix
+        backend:
+          service:
+            name: jobs-news-service
+            port:
+              number: 3006
+      
+      # 자격증 검색 API
+      - path: /api/search
+        pathType: Prefix
+        backend:
+          service:
+            name: certificate-search-service
+            port:
+              number: 3007
+      
+      - path: /api/autocomplete
+        pathType: Prefix
+        backend:
+          service:
+            name: certificate-search-service
+            port:
+              number: 3007
+      
+      # AI 포트폴리오 API
+      - path: /api/portfolio
+        pathType: Prefix
+        backend:
+          service:
+            name: ai-portfolio-service
+            port:
+              number: 3008
+      
+      # 헬스 체크
+      - path: /health
+        pathType: Exact
+        backend:
+          service:
+            name: community-board-service
+            port:
+              number: 3002
