@@ -1,0 +1,66 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Prometheus 자체 모니터링
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Hippo Project 백엔드 서비스들
+  - job_name: 'community-board-api'
+    static_configs:
+      - targets: ['community-board-api:3002']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  - job_name: 'study-group-api'
+    static_configs:
+      - targets: ['study-group-api:3003']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  - job_name: 'notification-api'
+    static_configs:
+      - targets: ['notification-api:3004']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  - job_name: 'jobs-news-api'
+    static_configs:
+      - targets: ['jobs-news-api:3006']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  - job_name: 'certificate-search'
+    static_configs:
+      - targets: ['certificate-search:3007']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  - job_name: 'ai-portfolio'
+    static_configs:
+      - targets: ['ai-portfolio:3008']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+
+  # Node Exporter (시스템 메트릭)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    scrape_interval: 15s
+
+
+
+
+

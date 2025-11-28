@@ -1,0 +1,89 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Kubernetes 클러스터 모니터링",
+    "tags": ["kubernetes", "cluster"],
+    "style": "dark",
+    "timezone": "browser",
+    "refresh": "30s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Pod 상태",
+        "type": "table",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "kube_pod_status_phase",
+            "format": "table",
+            "instant": true,
+            "refId": "A"
+          }
+        ],
+        "columns": [
+          {
+            "text": "Pod",
+            "value": "pod"
+          },
+          {
+            "text": "Namespace",
+            "value": "namespace"
+          },
+          {
+            "text": "Status",
+            "value": "phase"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "노드 CPU 사용률",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+            "legendFormat": "{{instance}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "percentage",
+            "min": 0,
+            "max": 100
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "노드 메모리 사용률",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "targets": [
+          {
+            "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+            "legendFormat": "{{instance}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "percentage",
+            "min": 0,
+            "max": 100
+          }
+        ]
+      }
+    ]
+  }
+}
+
+
+
+
+
