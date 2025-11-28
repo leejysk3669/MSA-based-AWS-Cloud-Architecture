@@ -27,17 +27,11 @@ Client → CloudFront → S3 → API Gateway → Backend API → RDS
 
 ---
 
-## 🧩 담당 역할 (Architecture 중심)
-
+## 🧩 담당 역할
 - 전체 AWS 기반 MSA 구조에 대한 이해  
 - API Gateway → Backend → DB로 이어지는 서비스 흐름 정리  
-- 백엔드 API 일부 구현  
-  - 뉴스 크롤링 API  
-  - AI 기반 자격증 검색 API  
-- 데이터 처리/정제 로직 설계  
-- 서비스 구조 설계 회의 참여 및 문서화  
-- 인프라 담당자(EKS/CI-CD)와 협업
-
+- 백엔드 API 일부 구현
+- 
 ---
 
 ## 🧱 기술 스택
@@ -46,11 +40,6 @@ Client → CloudFront → S3 → API Gateway → Backend API → RDS
 - AWS (CloudFront, Route53, S3, API Gateway, RDS)  
 - MSA 구조 이해  
 - Docker / Kubernetes(EKS 구조 이해)
-
-**Backend**
-- Node.js / Express  
-- Cheerio / Puppeteer  
-- AI API(Gemini)  
 
 ---
 
@@ -68,5 +57,4 @@ Client → CloudFront → S3 → API Gateway → Backend API → RDS
 ## 🚀 향후 계획
 
 - 직접 EKS 배포 및 운영 구조 구현  
-- CloudWatch 기반 로그/모니터링 추가  
 - API 구조 최적화 및 캐싱 고도화  
