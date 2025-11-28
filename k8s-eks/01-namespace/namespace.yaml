@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: hippo-project
+  labels:
+    name: hippo-project
+    environment: dev
+    project: hippo

@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: community-board-deployment
+  namespace: hippo-project
+  labels:
+    app: community-board
+    tier: backend
+spec:
+  replicas: 2  # 각 AZ에 1개씩 배치
+  selector:
+    matchLabels:
+      app: community-board
+  template:
+    metadata:
+      labels:
+        app: community-board
+    spec:
+      # Pod Anti-Affinity: 서로 다른 AZ에 배치
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - community-board
+              topologyKey: topology.kubernetes.io/zone
+      nodeSelector:
+        node-type: backend
+      tolerations:
+      - key: "node-type"
+        operator: "Equal"
+        value: "backend"
+        effect: "NoSchedule"
+      imagePullSecrets:
+      - name: docker-hub-secret
+      containers:
+      - name: community-board
+        image: ball2550/community-board-api:latest
+        ports:
+        - containerPort: 3002
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: DB_HOST
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: DB_USER
+        - name: DB_PASS
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: DB_PASSWORD
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: DB_NAME
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: DB_PORT
+        - name: NOTIFICATION_API_URL
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: NOTIFICATION_API_URL
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3002
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3002
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: community-board-service
+  namespace: hippo-project
+  labels:
+    app: community-board
+spec:
+  selector:
+    app: community-board
+  ports:
+  - port: 3002
+    targetPort: 3002
+    protocol: TCP
+  type: ClusterIP

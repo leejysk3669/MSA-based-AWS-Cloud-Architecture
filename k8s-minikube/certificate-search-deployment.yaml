@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: certificate-search
+  namespace: hippo-project
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: certificate-search
+  template:
+    metadata:
+      labels:
+        app: certificate-search
+    spec:
+      containers:
+      - name: certificate-search
+        image: ball2550/certificate-search:latest
+        ports:
+        - containerPort: 5000
+        env:
+        - name: NODE_ENV
+          value: "development"
+        - name: PORT
+          value: "5000"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: certificate-search-service
+  namespace: hippo-project
+spec:
+  selector:
+    app: certificate-search
+  ports:
+  - port: 5000
+    targetPort: 5000
+  type: ClusterIP

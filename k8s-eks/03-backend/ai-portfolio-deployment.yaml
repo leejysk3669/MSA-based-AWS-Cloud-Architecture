@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-portfolio-deployment
+  namespace: hippo-project
+  labels:
+    app: ai-portfolio
+    tier: backend
+spec:
+  replicas: 2  # 각 AZ에 1개씩 배치
+  selector:
+    matchLabels:
+      app: ai-portfolio
+  template:
+    metadata:
+      labels:
+        app: ai-portfolio
+    spec:
+      # Pod Anti-Affinity: 서로 다른 AZ에 배치
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - ai-portfolio
+              topologyKey: topology.kubernetes.io/zone
+      nodeSelector:
+        node-type: backend
+      tolerations:
+      - key: "node-type"
+        operator: "Equal"
+        value: "backend"
+        effect: "NoSchedule"
+      imagePullSecrets:
+      - name: docker-hub-secret
+      containers:
+      - name: ai-portfolio
+        image: ball2550/ai-portfolio-api:latest
+        ports:
+        - containerPort: 4000
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: GEMINI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: GEMINI_API_KEY
+        - name: NCS_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: NCS_API_KEY
+        - name: NCS_API_URL
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: NCS_API_URL
+        - name: PERPLEXITY_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: PERPLEXITY_API_KEY
+        - name: PERPLEXITY_API_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: PERPLEXITY_API_ENDPOINT
+        - name: PERPLEXITY_MODEL
+          valueFrom:
+            secretKeyRef:
+              name: backend-secrets
+              key: PERPLEXITY_MODEL
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 4000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 4000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-portfolio-service
+  namespace: hippo-project
+  labels:
+    app: ai-portfolio
+spec:
+  selector:
+    app: ai-portfolio
+  ports:
+  - port: 4000
+    targetPort: 4000
+    protocol: TCP
+  type: ClusterIP

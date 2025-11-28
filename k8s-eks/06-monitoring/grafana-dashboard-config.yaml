@@ -1,0 +1,371 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-hippo
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  hippo-dashboard.json: |
+    {
+      "id": null,
+        "title": "Hippo Project - 전체 모니터링",
+        "tags": ["hippo", "kubernetes", "production"],
+        "style": "dark",
+        "timezone": "browser",
+        "refresh": "30s",
+        "time": {
+          "from": "now-1h",
+          "to": "now"
+        },
+        "panels": [
+          {
+            "id": 1,
+            "title": "HTTP 요청률 (초당 요청 수)",
+            "type": "graph",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+            "targets": [
+              {
+                "expr": "rate(http_requests_total[5m])",
+                "legendFormat": "{{service}} - {{method}} {{route}}",
+                "refId": "A"
+              }
+            ],
+            "yAxes": [
+              {
+                "label": "requests/sec",
+                "min": 0
+              }
+            ],
+            "xAxes": [
+              {
+                "type": "time"
+              }
+            ],
+            "legend": {
+              "show": true,
+              "values": true,
+              "current": true,
+              "max": true,
+              "min": true,
+              "avg": true
+            }
+          },
+          {
+            "id": 2,
+            "title": "응답 시간 (95th percentile)",
+            "type": "graph",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+            "targets": [
+              {
+                "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+                "legendFormat": "95th percentile",
+                "refId": "A"
+              },
+              {
+                "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[5m]))",
+                "legendFormat": "50th percentile",
+                "refId": "B"
+              }
+            ],
+            "yAxes": [
+              {
+                "label": "seconds",
+                "min": 0
+              }
+            ],
+            "thresholds": [
+              {
+                "value": 1,
+                "colorMode": "critical",
+                "op": "gt"
+              },
+              {
+                "value": 0.5,
+                "colorMode": "warning",
+                "op": "gt"
+              }
+            ]
+          },
+          {
+            "id": 3,
+            "title": "에러율",
+            "type": "graph",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+            "targets": [
+              {
+                "expr": "rate(http_requests_total{status=~\"5..\"}[5m])",
+                "legendFormat": "5xx errors",
+                "refId": "A"
+              },
+              {
+                "expr": "rate(http_requests_total{status=~\"4..\"}[5m])",
+                "legendFormat": "4xx errors",
+                "refId": "B"
+              }
+            ],
+            "yAxes": [
+              {
+                "label": "errors/sec",
+                "min": 0
+              }
+            ],
+            "thresholds": [
+              {
+                "value": 0.1,
+                "colorMode": "critical",
+                "op": "gt"
+              }
+            ]
+          },
+          {
+            "id": 4,
+            "title": "서비스 상태",
+            "type": "table",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+            "targets": [
+              {
+                "expr": "up",
+                "format": "table",
+                "instant": true,
+                "refId": "A"
+              }
+            ],
+            "columns": [
+              {
+                "text": "Service",
+                "value": "instance"
+              },
+              {
+                "text": "Status",
+                "value": "Value"
+              }
+            ],
+            "transform": "table"
+          },
+          {
+            "id": 5,
+            "title": "메모리 사용률",
+            "type": "graph",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+            "targets": [
+              {
+                "expr": "container_memory_usage_bytes / container_spec_memory_limit_bytes * 100",
+                "legendFormat": "{{pod}} - {{container}}",
+                "refId": "A"
+              }
+            ],
+            "yAxes": [
+              {
+                "label": "percentage",
+                "min": 0,
+                "max": 100
+              }
+            ],
+            "thresholds": [
+              {
+                "value": 80,
+                "colorMode": "critical",
+                "op": "gt"
+              },
+              {
+                "value": 60,
+                "colorMode": "warning",
+                "op": "gt"
+              }
+            ]
+          },
+          {
+            "id": 6,
+            "title": "CPU 사용률",
+            "type": "graph",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+            "targets": [
+              {
+                "expr": "rate(container_cpu_usage_seconds_total[5m]) * 100",
+                "legendFormat": "{{pod}} - {{container}}",
+                "refId": "A"
+              }
+            ],
+            "yAxes": [
+              {
+                "label": "percentage",
+                "min": 0
+              }
+            ],
+            "thresholds": [
+              {
+                "value": 80,
+                "colorMode": "critical",
+                "op": "gt"
+              },
+              {
+                "value": 60,
+                "colorMode": "warning",
+                "op": "gt"
+              }
+            ]
+          },
+          {
+            "id": 7,
+            "title": "데이터베이스 연결 상태",
+            "type": "singlestat",
+            "gridPos": {"h": 4, "w": 6, "x": 0, "y": 24},
+            "targets": [
+              {
+                "expr": "database_connections_active",
+                "refId": "A"
+              }
+            ],
+            "valueName": "current",
+            "format": "short",
+            "thresholds": "0,1",
+            "colorBackground": true,
+            "colorValue": false,
+            "colors": ["red", "green"]
+          },
+          {
+            "id": 8,
+            "title": "총 게시글 수",
+            "type": "singlestat",
+            "gridPos": {"h": 4, "w": 6, "x": 6, "y": 24},
+            "targets": [
+              {
+                "expr": "posts_total",
+                "refId": "A"
+              }
+            ],
+            "valueName": "current",
+            "format": "short"
+          },
+          {
+            "id": 9,
+            "title": "총 댓글 수",
+            "type": "singlestat",
+            "gridPos": {"h": 4, "w": 6, "x": 12, "y": 24},
+            "targets": [
+              {
+                "expr": "comments_total",
+                "refId": "A"
+              }
+            ],
+            "valueName": "current",
+            "format": "short"
+          },
+          {
+            "id": 10,
+            "title": "활성 연결 수",
+            "type": "singlestat",
+            "gridPos": {"h": 4, "w": 6, "x": 18, "y": 24},
+            "targets": [
+              {
+                "expr": "active_connections",
+                "refId": "A"
+              }
+            ],
+            "valueName": "current",
+            "format": "short"
+          }
+        ]
+      }
+    }
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-kubernetes
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  kubernetes-dashboard.json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "Kubernetes 클러스터 모니터링",
+        "tags": ["kubernetes", "cluster"],
+        "style": "dark",
+        "timezone": "browser",
+        "refresh": "30s",
+        "time": {
+          "from": "now-1h",
+          "to": "now"
+        },
+        "panels": [
+          {
+            "id": 1,
+            "title": "Pod 상태",
+            "type": "table",
+            "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0},
+            "targets": [
+              {
+                "expr": "kube_pod_status_phase",
+                "format": "table",
+                "instant": true,
+                "refId": "A"
+              }
+            ],
+            "columns": [
+              {
+                "text": "Pod",
+                "value": "pod"
+              },
+              {
+                "text": "Namespace",
+                "value": "namespace"
+              },
+              {
+                "text": "Status",
+                "value": "phase"
+              }
+            ]
+          },
+          {
+            "id": 2,
+            "title": "노드 CPU 사용률",
+            "type": "graph",
+            "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+            "targets": [
+              {
+                "expr": "100 - (avg by (instance) (rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+                "legendFormat": "{{instance}}",
+                "refId": "A"
+              }
+            ],
+            "yAxes": [
+              {
+                "label": "percentage",
+                "min": 0,
+                "max": 100
+              }
+            ]
+          },
+          {
+            "id": 3,
+            "title": "노드 메모리 사용률",
+            "type": "graph",
+            "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+            "targets": [
+              {
+                "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+                "legendFormat": "{{instance}}",
+                "refId": "A"
+              }
+            ],
+            "yAxes": [
+              {
+                "label": "percentage",
+                "min": 0,
+                "max": 100
+              }
+            ]
+          }
+        ]
+      }
+
+
+
+
+
+

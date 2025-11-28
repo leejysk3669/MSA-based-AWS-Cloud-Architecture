@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jobs-news-deployment
+  namespace: hippo-project
+  labels:
+    app: jobs-news
+    tier: backend
+spec:
+  replicas: 2  # 각 AZ에 1개씩 배치
+  selector:
+    matchLabels:
+      app: jobs-news
+  template:
+    metadata:
+      labels:
+        app: jobs-news
+    spec:
+      # Pod Anti-Affinity: 서로 다른 AZ에 배치
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - jobs-news
+              topologyKey: topology.kubernetes.io/zone
+      nodeSelector:
+        node-type: backend
+      tolerations:
+      - key: "node-type"
+        operator: "Equal"
+        value: "backend"
+        effect: "NoSchedule"
+      imagePullSecrets:
+      - name: docker-hub-secret
+      containers:
+      - name: jobs-news
+        image: ball2550/jobs-news-api:latest
+        ports:
+        - containerPort: 3006
+        env:
+        - name: NODE_ENV
+          value: "production"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3006
+          initialDelaySeconds: 120
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3006
+          initialDelaySeconds: 60
+          periodSeconds: 15
+          timeoutSeconds: 10
+          failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jobs-news-service
+  namespace: hippo-project
+  labels:
+    app: jobs-news
+spec:
+  selector:
+    app: jobs-news
+  ports:
+  - port: 3006
+    targetPort: 3006
+    protocol: TCP
+  type: ClusterIP

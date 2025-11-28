@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-api
+  namespace: hippo-project
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-api
+  template:
+    metadata:
+      labels:
+        app: notification-api
+    spec:
+      containers:
+      - name: notification-api
+        image: ball2550/notification-api:latest
+        ports:
+        - containerPort: 3004
+        env:
+        - name: NODE_ENV
+          value: "development"
+        - name: PORT
+          value: "3004"
+        - name: DB_HOST
+          value: "postgres"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_USER
+          value: "hippo_user"
+        - name: DB_PASSWORD
+          value: "hippo_password"
+        - name: DB_NAME
+          value: "hippo_unified_db"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: hippo-project
+spec:
+  selector:
+    app: notification-api
+  ports:
+  - port: 3004
+    targetPort: 3004
+  type: ClusterIP

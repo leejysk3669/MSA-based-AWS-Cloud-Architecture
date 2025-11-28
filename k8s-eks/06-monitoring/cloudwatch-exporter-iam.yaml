@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cloudwatch-exporter-iam-policy
+  namespace: monitoring
+data:
+  policy.json: |
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "cloudwatch:GetMetricStatistics",
+            "cloudwatch:ListMetrics",
+            "cloudwatch:GetMetricData",
+            "cloudwatch:GetInsightRuleReport"
+          ],
+          "Resource": "*"
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "tag:GetResources"
+          ],
+          "Resource": "*"
+        }
+      ]
+    }
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cloudwatch-exporter
+  namespace: monitoring
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::YOUR_ACCOUNT_ID:role/cloudwatch-exporter-role
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,126 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-notification-channels
+  namespace: monitoring
+data:
+  notification-channels.yaml: |
+    apiVersion: 1
+    notificationchannels:
+      - name: "Slack Alerts"
+        type: "slack"
+        settings:
+          url: "YOUR_SLACK_WEBHOOK_URL"
+          channel: "#alerts"
+          title: "Hippo Project Alert"
+          text: "{{ range .Alerts }}{{ .Annotations.summary }}{{ end }}"
+      - name: "Email Alerts"
+        type: "email"
+        settings:
+          addresses: "admin@hippo-project.com"
+          subject: "Hippo Project Alert"
+          message: "{{ range .Alerts }}{{ .Annotations.description }}{{ end }}"
+      - name: "Webhook Alerts"
+        type: "webhook"
+        settings:
+          url: "http://alertmanager:9093/api/v1/alerts"
+          httpMethod: "POST"
+          title: "Hippo Project Alert"
+          message: "{{ range .Alerts }}{{ .Annotations.description }}{{ end }}"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-alert-rules
+  namespace: monitoring
+data:
+  alert-rules.yaml: |
+    apiVersion: 1
+    alert_rules:
+      - name: "High Error Rate"
+        message: "High error rate detected in Hippo Project services"
+        frequency: "10s"
+        conditions:
+          - evaluator:
+              params: [0.1]
+              type: "gt"
+            query:
+              params: ["A", "5m", "now"]
+              refId: "A"
+            reducer:
+              params: []
+              type: "last"
+            type: "query"
+        executionErrorState: "alerting"
+        noDataState: "no_data"
+        for: "5m"
+        notifications: ["Slack Alerts", "Email Alerts"]
+        
+      - name: "High Response Time"
+        message: "High response time detected in Hippo Project services"
+        frequency: "10s"
+        conditions:
+          - evaluator:
+              params: [1]
+              type: "gt"
+            query:
+              params: ["A", "5m", "now"]
+              refId: "A"
+            reducer:
+              params: []
+              type: "last"
+            type: "query"
+        executionErrorState: "alerting"
+        noDataState: "no_data"
+        for: "5m"
+        notifications: ["Slack Alerts", "Email Alerts"]
+        
+      - name: "Pod Down"
+        message: "Pod is down in Hippo Project"
+        frequency: "10s"
+        conditions:
+          - evaluator:
+              params: [1]
+              type: "lt"
+            query:
+              params: ["A", "5m", "now"]
+              refId: "A"
+            reducer:
+              params: []
+              type: "last"
+            type: "query"
+        executionErrorState: "alerting"
+        noDataState: "alerting"
+        for: "1m"
+        notifications: ["Slack Alerts", "Email Alerts"]
+        
+      - name: "High Memory Usage"
+        message: "High memory usage detected"
+        frequency: "10s"
+        conditions:
+          - evaluator:
+              params: [80]
+              type: "gt"
+            query:
+              params: ["A", "5m", "now"]
+              refId: "A"
+            reducer:
+              params: []
+              type: "last"
+            type: "query"
+        executionErrorState: "alerting"
+        noDataState: "no_data"
+        for: "5m"
+        notifications: ["Slack Alerts", "Email Alerts"]
+
+
+
+
+
+
+
+
+
+
+
