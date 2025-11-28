@@ -1,4 +1,5 @@
-##SeeSun 아키텍처 프로젝트  
+
+SeeSun 아키텍처 프로젝트  
 MSA 기반 AWS Cloud Architecture
 
 본 레포지토리는 SeeSun 서비스의 **MSA 기반 AWS 클라우드 아키텍처**를 이해하고  
