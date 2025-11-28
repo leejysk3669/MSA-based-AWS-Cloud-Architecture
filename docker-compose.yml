@@ -1,0 +1,150 @@
+version: '3.8'
+services:
+  # 통합 PostgreSQL 데이터베이스
+  postgres:
+    image: postgres:15
+    container_name: hippo-postgres
+    environment:
+      POSTGRES_DB: hippo_unified_db
+      POSTGRES_USER: hippo_user
+      POSTGRES_PASSWORD: hippo_password
+      # 한국 시간대 설정
+      TZ: Asia/Seoul
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-unified-database.sql:/docker-entrypoint-initdb.d/init-unified-database.sql
+    command: >
+      -c timezone=Asia/Seoul
+      -c log_timezone=Asia/Seoul
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=4MB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hippo_user -d hippo_unified_db"]
+      timeout: 20s
+      retries: 10
+      interval: 30s
+      start_period: 40s
+    networks:
+      - hippo-network
+
+  # 백엔드 서비스들 (선택적 - 개발 환경에서만 사용)
+  # 실제 운영에서는 각 서비스를 별도로 배포
+  community-board-api:
+    build: ./backend/community-board-api-unified
+    container_name: hippo-community-board-api
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=hippo_user
+      - DB_PASSWORD=hippo_password
+      - DB_NAME=hippo_unified_db
+      - CORS_ORIGIN=http://localhost:5173
+      - NOTIFICATION_API_URL=http://notification-api:3004
+    ports:
+      - "3002:3002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - hippo-network
+
+  study-group-api:
+    build: ./backend/study-group-api
+    container_name: hippo-study-group-api
+    environment:
+      - NODE_ENV=development
+      - PORT=3003
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=hippo_user
+      - DB_PASSWORD=hippo_password
+      - DB_NAME=hippo_unified_db
+      - NOTIFICATION_API_URL=http://notification-api:3004
+    ports:
+      - "3003:3003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - hippo-network
+
+  notification-api:
+    build: ./backend/notification-api
+    container_name: hippo-notification-api
+    environment:
+      - NODE_ENV=development
+      - PORT=3004
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=hippo_user
+      - DB_PASSWORD=hippo_password
+      - DB_NAME=hippo_unified_db
+    ports:
+      - "3004:3004"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - hippo-network
+
+  jobs-news-api:
+    build: ./backend/jobs-news-api
+    container_name: hippo-jobs-news-api
+    environment:
+      - NODE_ENV=development
+      - PORT=3006
+    ports:
+      - "3006:3006"
+    restart: unless-stopped
+    networks:
+      - hippo-network
+
+  certificate-search:
+    build: ./backend/certificate-search
+    container_name: hippo-certificate-search
+    environment:
+      - NODE_ENV=development
+      - PORT=3007
+    ports:
+      - "3007:3007"
+    restart: unless-stopped
+    networks:
+      - hippo-network
+
+  ai-portfolio:
+    build: ./backend/ai-portfolio
+    container_name: hippo-ai-portfolio
+    environment:
+      - NODE_ENV=development
+      - BACKEND_PORT=3008
+    ports:
+      - "3008:3008"
+    restart: unless-stopped
+    networks:
+      - hippo-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  hippo-network:
+    driver: bridge

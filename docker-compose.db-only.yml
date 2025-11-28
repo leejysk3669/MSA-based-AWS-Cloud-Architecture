@@ -1,0 +1,49 @@
+version: '3.8'
+services:
+  # 통합 PostgreSQL 데이터베이스 (로컬 개발용)
+  postgres:
+    image: postgres:15
+    container_name: hippo-postgres
+    environment:
+      POSTGRES_DB: hippo_unified_db
+      POSTGRES_USER: hippo_user
+      POSTGRES_PASSWORD: hippo_password
+      # 한국 시간대 설정
+      TZ: Asia/Seoul
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-unified-database.sql:/docker-entrypoint-initdb.d/init-unified-database.sql
+    command: >
+      -c timezone=Asia/Seoul
+      -c log_timezone=Asia/Seoul
+      -c max_connections=200
+      -c shared_buffers=256MB
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=4MB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hippo_user -d hippo_unified_db"]
+      timeout: 20s
+      retries: 10
+      interval: 30s
+      start_period: 40s
+    networks:
+      - hippo-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  hippo-network:
+    driver: bridge
